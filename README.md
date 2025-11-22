@@ -42,6 +42,10 @@ Possible outcomes:
 The funds on the winning side will be used to be payed as rewards to the users that participate in the liquidity migration.
 The funds on the losing side will be returned to the loser betters minus a penalization that will be accounted to the winning side. 
 
+### Auction Resolution Front Run Protection
+
+In order to protect from last minute bets that can change the outcome the betting we modify the bet finalization time using Pyth Entropy.
+
 ### Incentives
 
 Liquidity searchers: Actors that see value on migrate and lock liquidity.
