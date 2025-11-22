@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ETHGlobal Buenos Aires 2025 - bleeth.me
 
-## Getting Started
+Protocol that allows the creation of liquidity vampire attack on other protocols by incentivizing users with rewards if they migrate from a victim protocol to an attacker one. In exchange, users have to lock their liquidity for a certain period of time in order to obtain liquidity provision that cannot be considered mercenary liquidity.
 
-First, run the development server:
+## Protocol Specification
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Protocol Time Windows
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Anyone can create a vampire attack pool specifying the VA Pool configuration parameters.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Protocol steps:
+ - VA Pool creation.
+ - Betting period.
+ - Liquidity migration.
+ - Liquidity locking period.
+ - Rewards distribution.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Vampire Attack Pool
 
-## Learn More
+Configuration parameters:
+ - Attacker protocol (address of bleeth.me router for the specific protocol).
+ - Victim protocol (address of bleeth.me router for the specific protocol).
+ - Tokens list (tokens involved in the vampire attack).
+ - Reward token list (tokens given as reward).
+ - Penalization coeficient.
+ - Auction time.
+ - Liquidity migration time.
+ - Lock time.
 
-To learn more about Next.js, take a look at the following resources:
+### Betting
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+When an attack is created the direction is not specified yet meaning that attacker and victim protocols are specified but origin and destination of the funds are still pending do be defined. The resolution of the bet defines the direction of the attack. The bet allows to the users to bet 'for' or 'against' depositing reward token, the bet outcome is determined by the direction with higher value deposited.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Possible outcomes:
+ - 'for':
+    - attacker becomes destination
+    - victim becomes origin
+ - 'against':
+    - attacker becomes origin
+    - victim becomes destination
 
-## Deploy on Vercel
+The funds on the winning side will be used to be payed as rewards to the users that participate in the liquidity migration.
+The funds on the losing side will be returned to the loser betters minus a penalization that will be accounted to the winning side. 
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Incentives
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Liquidity searchers: Actors that see value on migrate and lock liquidity.
+
+Liquidity Pro: Actors that held liquidity.
+
+### Rewards Distribution
+
+The rewards are distributed using a rewards Synthetix like rewards distribution algorithm.
+
+## Contracts
+
+### bleeth.me core
+
+Singleton contract that handles the VA Pools and the betting and rewards distribution logic.
+
+### bleeth.me Routers
+
+Interfaces with protocols, held the locked liquidity and allows the users to manage the liquidity.
