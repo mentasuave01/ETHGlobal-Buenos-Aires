@@ -58,6 +58,6 @@ The rewards are distributed using a rewards Synthetix like rewards distribution 
 
 Singleton contract that handles the VA Pools and the betting and rewards distribution logic.
 
-### bleeth.me Routers
+### bleeth.me Adapters
 
-Interfaces with protocols, held the locked liquidity and allows the users to manage the liquidity.
+Adapters with protocols, held the locked liquidity and allows the users to manage the liquidity.
