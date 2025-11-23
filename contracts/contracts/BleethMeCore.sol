@@ -122,7 +122,6 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
             }
         }
         uint256 rewards = _computeRewards();
-        processWinningSide(vaPoolId, rewards);
         _processWinningSide(vaPoolId, winnerBet);
         vaPools[vaPoolId].state = VAPoolState.MIGRATION;
     }
@@ -175,6 +174,10 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
     }
 
     function _processWinningSide(uint256 vaPoolId, uint256 rewards) internal {
+        // TODO
+    }
+    
+    function _computeRewards() internal pure returns (uint256) {
         // TODO
     }
 }
