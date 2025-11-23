@@ -95,6 +95,11 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
         bytes32 randomNumber
     ) internal override {
         uint256 vaPoolId = randomnessMapping[sequenceNumber];
+
+        uint256 finalAuctionEndTimestamp = vaPools[vaPoolId].auctionEndTimestamp - (uint256(randomNumber) % INVALIDATION_WINDOW);
+        // Logic to get the auction winner implemented here
+
+        vaPools[vaPoolId].state = VAPoolState.MIGRATION;
     }
 
     function getEntropy() internal view override returns (address) {
