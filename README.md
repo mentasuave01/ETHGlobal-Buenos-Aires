@@ -13,13 +13,13 @@ Bleeth.me is a cornerstone protocol that systematizes the DeFi liquidity wars wh
 Protocol steps:
  1. **VA Pool creation**: Anyone can create a vampire attack pool specifying the VA Pool configuration parameters.
  2. **Betting period**: Once the attack is created, a betting period starts where third parties can bet 'for' or 'against' the attack.
- 3. **Liquidity migration period**: Once the betting period is finished the direction of the attack is
+ 3. **Liquidity migration period**: Once the betting period is finished the direction of the attack is known and a liquidity stream channel is open to easily allow the users to dissolve their liquidity positions on the origin protocol and migrate the funds to the destination protocol adapter contract.
  4. **Liquidity locking period**: Utilization of migrated liquidity is incentivized in the destination protocol by distributing rewards.
  5. **Funds unlock and rewards withdrawal**: Once the locking period has passed the migrated users can unlock their funds and obtain the extra rewards.
  
 ### Vampire Attack Pool Parameters
 
-The configuration parameters of a VA Pool are specified bye the `VAPool` struct.
+The configuration parameters of a VA Pool are specified by the `VAPool` struct.
 
 ```solidity
     struct VAPool {
@@ -41,7 +41,7 @@ The configuration parameters of a VA Pool are specified bye the `VAPool` struct.
 
 ### Betting
 
-When an attack is created the direction is not specified yet meaning that attacker and victim protocols are specified but origin and destination of the funds are still pending do be defined. The resolution of the bet defines the direction of the attack. The bet allows to the users to bet 'for' or 'against' depositing reward token, the bet outcome is determined by the direction with higher value deposited.
+When an attack is created the direction is not yet specified, meaning that attacker and victim protocols are specified but origin and destination of the funds (direction of the liquidity stream) are still pending do be defined. The resolution of the bet defines the direction of the attack. The bet allows to the users to bet 'for' or 'against' depositing reward token, the bet outcome is determined by the direction with higher value deposited.
 
 Possible outcomes:
  - 'for':
@@ -56,7 +56,8 @@ The funds on the losing side will be returned to the loser betters minus a penal
 
 ### Auction Resolution Front Run Protection
 
-In order to protect from last minute bets that can change the outcome the betting we modify the bet finalization time using Pyth Entropy.
+In order to prevent Sniping (Last-minute bidding), the betting period finalization time is randomized using Pyth Entropy in a time window close to the finalization time specified by the user.
+
 
 ### Incentives
 
