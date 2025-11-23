@@ -39,6 +39,12 @@ The configuration parameters of a VA Pool are specified by the `VAPool` struct.
     }
 ```
 
+### Incentives
+
+Liquidity searchers: Actors that see value on migrate and lock liquidity (Protocols Ecosystems or Fandom community).
+
+Liquidity Pro: Actors that held liquidity (Victim protocol users).
+
 ### Betting
 
 When an attack is created the direction is not yet specified, meaning that attacker and victim protocols are specified but origin and destination of the funds (direction of the liquidity stream) are still pending do be defined. The resolution of the bet defines the direction of the attack. The bet allows to the users to bet 'for' or 'against' depositing reward token, the bet outcome is determined by the direction with higher value deposited.
@@ -58,11 +64,12 @@ In order to prevent **sniping** (Last-minute bidding), the betting period finali
 
 ![Pyth random finalization](./schemas/random-betting-finalization-time.png)
 
-### Incentives
+### Liquidity Migration
 
-Liquidity searchers: Actors that see value on migrate and lock liquidity (Protocols Ecosystems or Fandom community).
+Users can migrate the liquidity to the migration protocol once the betting period has been finalized. In order to allow only users that where actually providing liquidity to the original protocol the average liquidity during a certain period previous to the initialization of the VAPool of the users is snapshooted and calculated using The Graph Amp datasets.
 
-Liquidity Pro: Actors that held liquidity (Victim protocol users).
+A merkle three is computed off chain with all positions and the root of this is submitted to the contracts by a trusted relayer, in order to be able to migrate the liquidity the users have to prove that they had liquidity in the origin protocol, by submitting a merkle inclusion proof to the core contract.
+
 
 ### Rewards Distribution
 
@@ -84,3 +91,6 @@ Adapters with protocols, held the locked liquidity and allows the users to manag
 ### Run tests
 
 `pnpm hardhat test contracts/tests/BleethMeCore.t.sol`
+
+## Deployment
+
