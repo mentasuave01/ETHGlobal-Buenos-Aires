@@ -26,6 +26,7 @@ interface IBleethMeCore {
 
     event VAPoolCreated(bytes32 indexed poolId, address indexed attacker, address indexed victim);
     event BetPlaced(bytes32 indexed poolId, address indexed user);
+    event RewardTokenWhitelisted(address indexed token, bool indexed status);
 
     error InsufficientBetAmount();
     error BettingPeriodClosed();
@@ -49,5 +50,5 @@ interface IBleethMeCore {
     // TODO Enumerated mapping
 
     // Admin Functions
-    function whitelistRewardToken(IERC20 token) external;
+    function setWhitelistRewardToken(IERC20 token, bool status) external;
 }

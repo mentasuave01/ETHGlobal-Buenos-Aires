@@ -77,8 +77,11 @@ contract BleethMeCore is IBleethMeCore, Ownable {
     }
 
     // onlyOwner functions
-    function whitelistRewardToken(IERC20 token) external onlyOwner {
-        
+    function setWhitelistRewardToken(IERC20 token, bool status) external onlyOwner {
+
+        whitelistedRewardTokens[token] = status;
+
+        emit RewardTokenWhitelisted(address(token), status);
     }
 
     // Private functions
