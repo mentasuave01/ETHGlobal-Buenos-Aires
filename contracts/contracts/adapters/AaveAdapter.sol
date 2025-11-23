@@ -31,6 +31,6 @@ contract AaveAdapter is IBaseAdapter {
         external
         onlyCore
     {
-        market.supply(asset, amount, liquidityMigrator, 0);
+        market.supply(asset, amount, address(this), 0);
     }
 }

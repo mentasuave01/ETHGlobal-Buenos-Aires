@@ -35,6 +35,6 @@ contract MorphpAdapter is IBaseAdapter {
         (MarketParams memory dataParams, address market) = abi.decode(allocationData, (MarketParams, address));
         require(dataParams.collateralToken == asset, AssetMismatch());
         bytes memory emptyData;
-        IMorphoBase(market).supply(dataParams, amount, 0, liquidityMigrator, emptyData);
+        IMorphoBase(market).supply(dataParams, amount, 0, address(this), emptyData);
     }
 }

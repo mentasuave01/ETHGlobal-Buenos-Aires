@@ -147,9 +147,9 @@
       "name": "createVaPool",
       "outputs": [
         {
-          "internalType": "bytes32",
-          "name": "poolId",
-          "type": "bytes32"
+          "internalType": "uint256",
+          "name": "vaPoolId",
+          "type": "uint256"
         }
       ],
       "stateMutability": "nonpayable",
@@ -299,5 +299,5 @@
   "deployedLinkReferences": {},
   "immutableReferences": {},
   "inputSourceName": "project/contracts/interfaces/IBleethMeCore.sol",
-  "buildInfoId": "solc-0_8_28-1e531ab86e9548f38c04b6462c265981f8b7122c"
+  "buildInfoId": "solc-0_8_28-6bc3f3f8069b38c4efa32e0d58a76e3e630cc058"
 }

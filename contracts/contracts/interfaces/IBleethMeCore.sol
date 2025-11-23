@@ -46,7 +46,7 @@ interface IBleethMeCore {
         uint256 snapshotLookupTime,
         IERC20 initialBetToken,
         uint256 initialBetAmount
-    ) external returns (bytes32 poolId);
+    ) external returns (uint256 vaPoolId);
 
     function placeBet(uint256 vaPoolId, BetSide side, IERC20 token, uint256 amount) external;
 

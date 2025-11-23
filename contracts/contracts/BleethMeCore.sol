@@ -73,7 +73,7 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
         uint256 snapshotLookupTimestamp,
         IERC20 initialBetToken,
         uint256 initialBetAmount
-    ) external returns (bytes32 poolId) {
+    ) external returns (uint256 vaPoolId) {
         // Checks
         require(penalizationCoefficient <= PENALIZATION_BPS, "Invalid penalization");
 
@@ -98,6 +98,7 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
         require(initialBetAmount >= MINIMUM_INITIAL_BET, InsufficientBetAmount());
         require(whitelistedRewardTokens.get(address(initialBetToken)) != bytes32(0), RewardTokenNotWhitelisted());
         _placeBet(vaPoolCount, BetSide.FOR, initialBetToken, initialBetAmount);
+        vaPoolId = vaPoolCount;
 
         emit VAPoolCreated(bytes32(vaPoolCount), address(attacker), address(victim));
     }
@@ -165,7 +166,6 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
 
         uint256 finalAuctionEndTimestamp =
             vaPools[vaPoolId].auctionEndTimestamp - (uint256(randomNumber) % INVALIDATION_WINDOW);
-        Bet memory winnerBet;
         for (uint256 i = vaPools[vaPoolId].invalidatableBetters.length; i >= 0; i--) {
             Bet storage bet = vaPools[vaPoolId].bets[vaPools[vaPoolId].invalidatableBetters[i]];
             if (bet.timestamp < finalAuctionEndTimestamp) {
@@ -293,7 +293,7 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
             if (vaPools[vaPoolId].rewardTokens[IERC20(rewardTokens[i])]) {
                 bytes32 priceFeedId = whitelistedRewardTokens.get(rewardTokens[i]); 
                 PythStructs.Price memory price = pyth.getPriceNoOlderThan(priceFeedId, MAX_PRICE_AGE);
-                uint256 assetPrice = getPythPrice1e18(price.price, price.expo);
+                uint256 assetPrice = getPythPrice1e18(price);
 
                 totalValueFor += assetPrice * vaPools[vaPoolId].totalBetFor[IERC20(rewardTokens[i])];
                 totalValueAgainst += assetPrice * vaPools[vaPoolId].totalBetAgainst[IERC20(rewardTokens[i])];
@@ -309,14 +309,15 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
         // TODO
     }
 
-    function getPythPrice1e18(int64 price, int32 expo) public pure returns (uint256) {
-        if (expo < -18) {
-            uint256 divisor = 10 ** uint32(uint32(-18 - expo));
-            return uint256(int256(price)) / divisor;
-        } else {
-            uint256 multiplier = 10 ** uint32(uint32(18 + expo));
-            return uint256(int256(price)) * multiplier;
-        }
+    function getPythPrice1e18(PythStructs.Price memory pythPrice) public pure returns (uint256) {
+        if (pythPrice.price == 0) revert();
+        if (pythPrice.publishTime == 0) revert();
+        if (pythPrice.price < 0 || pythPrice.expo > 0) revert();
+
+        uint price18Decimals = (uint(uint64(pythPrice.price)) * (10 ** 18)) /
+            (10 ** uint8(uint32(-1 * pythPrice.expo)));
+
+        return price18Decimals;
     }
 
 }
