@@ -5,10 +5,10 @@ import {IBleethMeCore} from "./interfaces/IBleethMeCore.sol";
 import {IBaseAdapter} from "./interfaces/IBaseAdapter.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import "@pythnetwork/entropy-sdk-solidity/IEntropyV2.sol";
-import "@pythnetwork/entropy-sdk-solidity/IEntropyConsumer.sol";
+import {IEntropyV2} from "@pythnetwork/entropy-sdk-solidity/IEntropyV2.sol";
+import {IEntropyConsumer} from "@pythnetwork/entropy-sdk-solidity/IEntropyConsumer.sol";
 
-contract BleethMeCore is IBleethMeCore, Ownable {
+contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
 
     struct VAPool {
         IBaseAdapter attacker;
@@ -31,9 +31,13 @@ contract BleethMeCore is IBleethMeCore, Ownable {
 
     mapping(uint256 => VAPool) public vaPools;
     mapping(IERC20 => bool) public whitelistedRewardTokens;
+    mapping(uint64 sequenceNumber => uint256 vaPoolId) public randomnessMapping;
     uint256 public vaPoolCount;
+    IEntropyV2 public entropy;
 
-    constructor(address initialOwner) Ownable(initialOwner) {}
+    constructor(address initialOwner, address _entropy) Ownable(initialOwner) {
+        entropy = IEntropyV2(_entropy);
+    }
 
     function createVaPool(
         IBaseAdapter attacker,
@@ -74,9 +78,23 @@ contract BleethMeCore is IBleethMeCore, Ownable {
         _placeBet(vaPoolId, bet);
     }
 
-    function finalizeBetting(uint256 vaPoolId) external {
-        require(block.timestamp >= vaPools[vaPoolCount].auctionEndTimestamp, "not finalized");
+    function finalizeBetting(uint256 vaPoolId) external payable {
+        require(block.timestamp >= vaPools[vaPoolId].auctionEndTimestamp, "not finalized");
+        uint128 requestFee = entropy.getFeeV2();
+        if (msg.value < requestFee) revert("not enough fees");
+        randomnessMapping[entropy.requestV2{ value: requestFee }()] = vaPoolId;
+    }
 
+    function entropyCallback(
+        uint64 sequenceNumber,
+        address,
+        bytes32 randomNumber
+    ) internal override {
+        uint256 vaPoolId = randomnessMapping[sequenceNumber];
+    }
+
+    function getEntropy() internal view override returns (address) {
+        return address(entropy);
     }
     
     // View functions
