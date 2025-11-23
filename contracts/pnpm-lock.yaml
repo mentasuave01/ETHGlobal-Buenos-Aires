@@ -20,6 +20,9 @@ importers:
       '@pythnetwork/entropy-sdk-solidity':
         specifier: ^2.2.1
         version: 2.2.1
+      '@pythnetwork/pyth-sdk-solidity':
+        specifier: ^4.3.1
+        version: 4.3.1
     devDependencies:
       '@nomicfoundation/hardhat-ignition':
         specifier: ^3.0.5
@@ -486,6 +489,10 @@ packages:
 
   '@pythnetwork/entropy-sdk-solidity@2.2.1':
     resolution: {integrity: sha512-vwP7uJby591PWl78nA/lFkAsy9vSNV4DdvcqHxkAZEHhcAobVqErAMFSqp6HRO/epe07WKCorT+7favHh4sCjQ==}
+    engines: {node: '>=22.14.0'}
+
+  '@pythnetwork/pyth-sdk-solidity@4.3.1':
+    resolution: {integrity: sha512-dAzsVDSKXS/Tbhik5Hp2kix3vDp98SlCXmputDIOkVyF4SKKnhXmIn+iGVmSQdrlF9jCFtvjBj7XYP+9wwpA4A==}
     engines: {node: '>=22.14.0'}
 
   '@scure/base@1.1.9':
@@ -1370,6 +1377,8 @@ snapshots:
   '@openzeppelin/contracts@5.4.0': {}
 
   '@pythnetwork/entropy-sdk-solidity@2.2.1': {}
+
+  '@pythnetwork/pyth-sdk-solidity@4.3.1': {}
 
   '@scure/base@1.1.9': {}
 

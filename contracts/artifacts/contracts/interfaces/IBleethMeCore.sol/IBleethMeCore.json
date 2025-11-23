@@ -15,6 +15,11 @@
     },
     {
       "inputs": [],
+      "name": "BettingPeriodNotFinalized",
+      "type": "error"
+    },
+    {
+      "inputs": [],
       "name": "InsufficientBetAmount",
       "type": "error"
     },
@@ -262,5 +267,5 @@
   "deployedLinkReferences": {},
   "immutableReferences": {},
   "inputSourceName": "project/contracts/interfaces/IBleethMeCore.sol",
-  "buildInfoId": "solc-0_8_28-84d7b432929a4f7627c6b4134d75c2115d2bebe0"
+  "buildInfoId": "solc-0_8_28-1e970f38cf8460bd356cbaf2dc22f6087274fdef"
 }

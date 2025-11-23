@@ -15,7 +15,7 @@ export interface IBaseAdapter$Type {
   readonly deployedLinkReferences: {};
   readonly immutableReferences: {};
   readonly inputSourceName: "project/contracts/interfaces/IBaseAdapter.sol";
-  readonly buildInfoId: "solc-0_8_28-935cbe97b79c04f556c9edd9bbb41312f77af316";
+  readonly buildInfoId: "solc-0_8_28-1e970f38cf8460bd356cbaf2dc22f6087274fdef";
 };
 
 import "hardhat/types/artifacts";

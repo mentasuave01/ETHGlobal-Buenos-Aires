@@ -15,6 +15,7 @@
     "@aave/core-v3": "^1.19.3",
     "@morpho-org/morpho-blue": "^1.0.0",
     "@openzeppelin/contracts": "^5.4.0",
-    "@pythnetwork/entropy-sdk-solidity": "^2.2.1"
+    "@pythnetwork/entropy-sdk-solidity": "^2.2.1",
+    "@pythnetwork/pyth-sdk-solidity": "^4.3.1"
   }
 }
