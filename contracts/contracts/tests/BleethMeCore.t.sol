@@ -47,7 +47,6 @@ contract BleethMeCoreTest is Test {
         mockEntropy = new MockEntropy();
         mockPyth = new MockPyth();
 
-
         // Deploy BleethMeCore contract
         bleethMeCore = new BleethMeCore(OWNER, address(mockEntropy), address(mockPyth));
 

@@ -11,9 +11,8 @@ import {IEntropyConsumer} from "@pythnetwork/entropy-sdk-solidity/IEntropyConsum
 import {IPyth} from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import {PythStructs} from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 
-contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable { 
+contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
     using EnumerableMap for EnumerableMap.AddressToBytes32Map;
-
 
     struct VAPool {
         IBaseAdapter attacker;
@@ -50,7 +49,6 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
     IEntropyV2 public entropy;
     IPyth public pyth;
 
-
     constructor(address initialOwner, address _entropy, address _pyth) Ownable(initialOwner) {
         entropy = IEntropyV2(_entropy);
         pyth = IPyth(_pyth);
@@ -81,7 +79,7 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
         // Set reward tokens
         uint256 length = rewardTokens.length;
         for (uint256 i = 0; i < length; i++) {
-            require(whitelistedRewardTokens.get(address(rewardTokens[i])) != bytes32(0) , RewardTokenNotWhitelisted());
+            require(whitelistedRewardTokens.get(address(rewardTokens[i])) != bytes32(0), RewardTokenNotWhitelisted());
             vaPools[vaPoolCount].rewardTokens[rewardTokens[i]] = true;
         }
 
@@ -102,13 +100,12 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
     }
 
     function finalizeBetting(uint256 vaPoolId, bytes[] calldata priceUpdate) external payable {
-
         require(vaPools[vaPoolId].state == VAPoolState.BETTING, BettingPeriodClosed());
         require(block.timestamp >= vaPools[vaPoolId].auctionEndTimestamp, "not finalized");
 
         // Update the price feed
-        uint fee = pyth.getUpdateFee(priceUpdate);
-        pyth.updatePriceFeeds{ value: fee }(priceUpdate);
+        uint256 fee = pyth.getUpdateFee(priceUpdate);
+        pyth.updatePriceFeeds{value: fee}(priceUpdate);
 
         if (vaPools[vaPoolId].invalidatableBetters.length != 0) {
             uint128 requestFee = entropy.getFeeV2();
@@ -165,11 +162,11 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
     function computeTotalBets(uint256 vaPoolId) public view returns (uint256 totalFor, uint256 totalAgainst) {
         // TODO
     }
-    
+
     function getWhitelistedRewardTokens() public view returns (address[] memory) {
         return whitelistedRewardTokens.keys();
     }
-    
+
     function getWhitelistedRewardTokenPriceFeedId(IERC20 token) external view returns (bytes32) {
         return whitelistedRewardTokens.get(address(token));
     }
@@ -205,7 +202,6 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
     }
 
     function _computeRewards(uint256 vaPoolId) internal view returns (uint256) {
-        
         bytes32 priceFeedId = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace; // ETH/USD
         PythStructs.Price memory price = pyth.getPriceNoOlderThan(priceFeedId, 60);
         // TODO
