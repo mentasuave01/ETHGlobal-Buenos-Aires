@@ -59,6 +59,7 @@ contract BleethMeCore is IBleethMeCore, Ownable {
         // Set reward tokens
         uint256 length = rewardTokens.length;
         for (uint256 i = 0; i < length; i++) {
+            require(whitelistedRewardTokens[rewardTokens[i]], RewardTokenNotWhitelisted());
             vaPools[vaPoolCount].rewardTokens[rewardTokens[i]] = true;
         }
 

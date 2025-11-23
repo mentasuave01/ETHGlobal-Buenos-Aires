@@ -28,6 +28,7 @@ interface IBleethMeCore {
     event BetPlaced(bytes32 indexed poolId, address indexed user);
     event RewardTokenWhitelisted(address indexed token, bool indexed status);
 
+    error RewardTokenNotWhitelisted();
     error InsufficientBetAmount();
     error BettingPeriodClosed();
 
