@@ -27,7 +27,7 @@ interface IBleethMeCore {
 
     event VAPoolCreated(bytes32 indexed poolId, address indexed attacker, address indexed victim);
     event BetPlaced(bytes32 indexed poolId, address indexed user);
-    event RewardTokenWhitelisted(address indexed token, bool indexed status);
+    event RewardTokenWhitelisted(address indexed token,  bytes32 indexed priceFeedId);
 
     error RewardTokenNotWhitelisted();
     error InsufficientBetAmount();
@@ -54,6 +54,11 @@ interface IBleethMeCore {
 
     function getBet(uint256 vaPoolId, address better) external view returns (Bet memory);
 
+    function getWhitelistedRewardTokens() external view returns (address[] memory);
+
+    function getWhitelistedRewardTokenPriceFeedId(IERC20 token) external view returns (bytes32);
+    
+
     // Admin Functions
-    function setWhitelistRewardToken(IERC20 token, bool status) external;
+    function setWhitelistRewardToken(IERC20 token, bytes32 priceFeedId) external;
 }

@@ -6,6 +6,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {MockEntropy} from "./mocks/MockEntropy.sol";
 import {MockERC20} from "./mocks/MockERC20.sol";
 import {MockAdapter} from "./mocks/MockAdapter.sol";
+import {MockPyth} from "./mocks/MockPyth.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -24,6 +25,7 @@ contract BleethMeCoreTest is Test {
     MockAdapter attackerAdapter;
     MockAdapter victimAdapter;
     MockEntropy mockEntropy;
+    MockPyth mockPyth;
 
     address constant OWNER = address(0xABCD);
     address constant USER1 = address(0x1111);
@@ -39,18 +41,20 @@ contract BleethMeCoreTest is Test {
         liquidityTokenA = new MockERC20("Liquidity Token A", "LTA");
         liquidityTokenB = new MockERC20("Liquidity Token B", "LTB");
 
-        // Deploy mock adapters
+        // Deploy mocks
         attackerAdapter = new MockAdapter(address(bleethMeCore));
         victimAdapter = new MockAdapter(address(bleethMeCore));
         mockEntropy = new MockEntropy();
+        mockPyth = new MockPyth();
+
 
         // Deploy BleethMeCore contract
-        bleethMeCore = new BleethMeCore(OWNER, address(mockEntropy));
+        bleethMeCore = new BleethMeCore(OWNER, address(mockEntropy), address(mockPyth));
 
         // Whitelist reward tokens
         vm.startPrank(OWNER);
-        bleethMeCore.setWhitelistRewardToken(rewardTokenA, true);
-        bleethMeCore.setWhitelistRewardToken(rewardTokenB, true);
+        bleethMeCore.setWhitelistRewardToken(rewardTokenA, bytes32(uint256(1)));
+        bleethMeCore.setWhitelistRewardToken(rewardTokenB, bytes32(uint256(1)));
         vm.stopPrank();
     }
 

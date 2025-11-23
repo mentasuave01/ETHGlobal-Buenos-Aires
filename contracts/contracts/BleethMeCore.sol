@@ -4,14 +4,17 @@ pragma solidity ^0.8.28;
 import {IBleethMeCore} from "./interfaces/IBleethMeCore.sol";
 import {IBaseAdapter} from "./interfaces/IBaseAdapter.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {EnumerableMap} from "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IEntropyV2} from "@pythnetwork/entropy-sdk-solidity/IEntropyV2.sol";
 import {IEntropyConsumer} from "@pythnetwork/entropy-sdk-solidity/IEntropyConsumer.sol";
-
 import {IPyth} from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import {PythStructs} from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 
-contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
+contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable { 
+    using EnumerableMap for EnumerableMap.AddressToBytes32Map;
+
+
     struct VAPool {
         IBaseAdapter attacker;
         IBaseAdapter victim;
@@ -40,13 +43,17 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
     uint256 constant PENALIZATION_BPS = 100_00;
 
     mapping(uint256 => VAPool) public vaPools;
-    mapping(IERC20 => bool) public whitelistedRewardTokens;
+    mapping(uint256 => VAStream) public vaStreams;
+    EnumerableMap.AddressToBytes32Map private whitelistedRewardTokens;
     mapping(uint64 sequenceNumber => uint256 vaPoolId) public randomnessMapping;
     uint256 public vaPoolCount;
     IEntropyV2 public entropy;
+    IPyth public pyth;
 
-    constructor(address initialOwner, address _entropy) Ownable(initialOwner) {
+
+    constructor(address initialOwner, address _entropy, address _pyth) Ownable(initialOwner) {
         entropy = IEntropyV2(_entropy);
+        pyth = IPyth(_pyth);
     }
 
     function createVaPool(
@@ -74,13 +81,13 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
         // Set reward tokens
         uint256 length = rewardTokens.length;
         for (uint256 i = 0; i < length; i++) {
-            require(whitelistedRewardTokens[rewardTokens[i]], RewardTokenNotWhitelisted());
+            require(whitelistedRewardTokens.get(address(rewardTokens[i])) != bytes32(0) , RewardTokenNotWhitelisted());
             vaPools[vaPoolCount].rewardTokens[rewardTokens[i]] = true;
         }
 
         // Place initial bet
         require(initialBetAmount >= MINIMUM_INITIAL_BET, InsufficientBetAmount());
-        require(whitelistedRewardTokens[initialBetToken], RewardTokenNotWhitelisted());
+        require(whitelistedRewardTokens.get(address(initialBetToken)) != bytes32(0), RewardTokenNotWhitelisted());
         _placeBet(vaPoolCount, BetSide.FOR, initialBetToken, initialBetAmount);
 
         emit VAPoolCreated(bytes32(vaPoolCount), address(attacker), address(victim));
@@ -94,15 +101,21 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
         // TODO
     }
 
-    function finalizeBetting(uint256 vaPoolId) external payable {
+    function finalizeBetting(uint256 vaPoolId, bytes[] calldata priceUpdate) external payable {
+
         require(vaPools[vaPoolId].state == VAPoolState.BETTING, BettingPeriodClosed());
         require(block.timestamp >= vaPools[vaPoolId].auctionEndTimestamp, "not finalized");
+
+        // Update the price feed
+        uint fee = pyth.getUpdateFee(priceUpdate);
+        pyth.updatePriceFeeds{ value: fee }(priceUpdate);
+
         if (vaPools[vaPoolId].invalidatableBetters.length != 0) {
             uint128 requestFee = entropy.getFeeV2();
             if (msg.value < requestFee) revert("not enough fees");
             randomnessMapping[entropy.requestV2{value: requestFee}()] = vaPoolId;
         } else {
-            uint256 rewards = _computeRewards();
+            uint256 rewards = _computeRewards(vaPoolId);
             _processWinningSide(vaPoolId, rewards);
             vaPools[vaPoolId].state = VAPoolState.MIGRATION;
         }
@@ -125,16 +138,18 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
             }
         }
         // TODO
-        uint256 rewards = _computeRewards();
+        uint256 rewards = _computeRewards(vaPoolId);
         _processWinningSide(vaPoolId, rewards);
         vaPools[vaPoolId].state = VAPoolState.MIGRATION;
     }
 
     // onlyOwner functions
-    function setWhitelistRewardToken(IERC20 token, bool status) external onlyOwner {
-        whitelistedRewardTokens[token] = status;
+    function setWhitelistRewardToken(IERC20 token, bytes32 priceFeedId) external onlyOwner {
+        // TODO check oracle
 
-        emit RewardTokenWhitelisted(address(token), status);
+        whitelistedRewardTokens.set(address(token), priceFeedId);
+
+        emit RewardTokenWhitelisted(address(token), priceFeedId);
     }
 
     function finalizeBettingPeriod(uint256 vaPoolId) external onlyOwner {
@@ -149,6 +164,14 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
 
     function computeTotalBets(uint256 vaPoolId) public view returns (uint256 totalFor, uint256 totalAgainst) {
         // TODO
+    }
+    
+    function getWhitelistedRewardTokens() public view returns (address[] memory) {
+        return whitelistedRewardTokens.keys();
+    }
+    
+    function getWhitelistedRewardTokenPriceFeedId(IERC20 token) external view returns (bytes32) {
+        return whitelistedRewardTokens.get(address(token));
     }
 
     function getEntropy() internal view override returns (address) {
@@ -181,7 +204,10 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
         // TODO
     }
 
-    function _computeRewards() internal pure returns (uint256) {
+    function _computeRewards(uint256 vaPoolId) internal view returns (uint256) {
+        
+        bytes32 priceFeedId = 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace; // ETH/USD
+        PythStructs.Price memory price = pyth.getPriceNoOlderThan(priceFeedId, 60);
         // TODO
     }
 }
