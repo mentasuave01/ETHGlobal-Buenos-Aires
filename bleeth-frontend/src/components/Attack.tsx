@@ -18,7 +18,6 @@ export default function Attack({ onBack }: AttackProps) {
   const [selectedToken, setSelectedToken] = useState("");
   const [lockPeriod, setLockPeriod] = useState("");
   const [penalizationCoefficient, setPenalizationCoefficient] = useState("");
-  const [auctionDuration, setAuctionDuration] = useState("");
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const amountInput = useInput("", selectedToken as Address);
@@ -60,14 +59,21 @@ export default function Attack({ onBack }: AttackProps) {
   };
 
   const handleSubmit = () => {
+    // Convert lock period from weeks to unix timestamp
+    const weeks = parseFloat(lockPeriod) || 0;
+    const secondsInWeek = 7 * 24 * 60 * 60;
+    const lockPeriodTimestamp = Math.floor(Date.now() / 1000) + (weeks * secondsInWeek);
+    
+    // Convert penalization coefficient from percentage (0-100) to contract value (0-100)
+    const penalizationValue = parseFloat(penalizationCoefficient) || 0;
+    
     console.log("Attack submitted:", {
       target: selectedTarget,
       attacker: selectedAttacker,
       token: selectedToken,
       amount: amountInput.value,
-      lockPeriod,
-      penalizationCoefficient,
-      auctionDuration,
+      lockPeriod: lockPeriodTimestamp, // Unix timestamp
+      penalizationCoefficient: penalizationValue, // 0-100
     });
   };
 
@@ -78,7 +84,11 @@ export default function Attack({ onBack }: AttackProps) {
       case 2:
         return isConnected && selectedToken && amountInput.valueBN !== BigInt(0) && !amountInput.maxBalanceExceeded;
       case 3:
-        return lockPeriod && penalizationCoefficient && auctionDuration;
+        const lockPeriodValid = lockPeriod && parseFloat(lockPeriod) >= 0;
+        const penalizationValid = penalizationCoefficient && 
+          parseFloat(penalizationCoefficient) >= 0 && 
+          parseFloat(penalizationCoefficient) <= 100;
+        return lockPeriodValid && penalizationValid;
       case 4:
         return true;
       default:
@@ -248,7 +258,7 @@ export default function Attack({ onBack }: AttackProps) {
             <h3 className="text-white text-xl font-semibold mb-4">Attack Parameters</h3>
 
             <div>
-              <label className="text-white text-sm mb-2 block">Lock Period</label>
+              <label className="text-white text-sm mb-2 block">Lock Period (weeks)</label>
               <input
                 type="number"
                 value={lockPeriod}
@@ -261,27 +271,15 @@ export default function Attack({ onBack }: AttackProps) {
             </div>
 
             <div>
-              <label className="text-white text-sm mb-2 block">Penalization Coefficient</label>
+              <label className="text-white text-sm mb-2 block">Penalization Coefficient (%)</label>
               <input
                 type="number"
                 value={penalizationCoefficient}
                 onChange={(e) => setPenalizationCoefficient(e.target.value)}
-                placeholder="0.0"
-                step="0.01"
-                min="0"
-                className="w-full bg-gray-800 text-white border border-red-900/30 rounded px-3 py-2 focus:outline-none focus:border-red-500"
-              />
-            </div>
-
-            <div>
-              <label className="text-white text-sm mb-2 block">Auction Duration</label>
-              <input
-                type="number"
-                value={auctionDuration}
-                onChange={(e) => setAuctionDuration(e.target.value)}
                 placeholder="0"
                 step="1"
                 min="0"
+                max="100"
                 className="w-full bg-gray-800 text-white border border-red-900/30 rounded px-3 py-2 focus:outline-none focus:border-red-500"
               />
             </div>
@@ -298,9 +296,8 @@ export default function Attack({ onBack }: AttackProps) {
                 <p><span className="text-gray-400">Attacker:</span> {selectedAttacker}</p>
                 <p><span className="text-gray-400">Token:</span> {selectedToken}</p>
                 <p><span className="text-gray-400">Amount:</span> {amountInput.value}</p>
-                <p><span className="text-gray-400">Lock Period:</span> {lockPeriod}</p>
-                <p><span className="text-gray-400">Penalization Coefficient:</span> {penalizationCoefficient}</p>
-                <p><span className="text-gray-400">Auction Duration:</span> {auctionDuration}</p>
+                <p><span className="text-gray-400">Lock Period:</span> {lockPeriod} {lockPeriod && "weeks"}</p>
+                <p><span className="text-gray-400">Penalization Coefficient:</span> {penalizationCoefficient}{penalizationCoefficient && "%"}</p>
               </div>
             </div>
 

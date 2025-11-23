@@ -1,9 +1,7 @@
 
-
 import { Geist, Geist_Mono } from "next/font/google";
-
+import type { Metadata } from "next";
 import "./globals.css";
-
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,6 +14,12 @@ const geistMono = Geist_Mono({
 });
 import '@rainbow-me/rainbowkit/styles.css';
 import { Providers } from '../components/Web3Provider';
+
+export const metadata: Metadata = {
+  icons: {
+    icon: '/bleeth.svg',
+  },
+};
 
 function RootLayout({ children }: { children: React.ReactNode }) {
   return (
