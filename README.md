@@ -11,15 +11,15 @@ Bleeth.me is a cornerstone protocol that systematizes the DeFi liquidity wars wh
 ### Vampire Attack Steps and Time Windows
 
 Protocol steps:
- 1. VA Pool creation:  Anyone can create a vampire attack pool specifying the VA Pool configuration parameters.
- 2. Betting period.
- 3. Liquidity migration period.
- 4. Liquidity locking period.
- 5. Rewards distribution.
+ 1. **VA Pool creation**: Anyone can create a vampire attack pool specifying the VA Pool configuration parameters.
+ 2. **Betting period**: Once the attack is created, a betting period starts where third parties can bet 'for' or 'against' the attack.
+ 3. **Liquidity migration period**: Once the betting period is finished the direction of the attack is
+ 4. **Liquidity locking period**: Utilization of migrated liquidity is incentivized in the destination protocol by distributing rewards.
+ 5. **Funds unlock and rewards withdrawal**: Once the locking period has passed the migrated users can unlock their funds and obtain the extra rewards.
  
 ### Vampire Attack Pool Parameters
 
-The configuration parameters of a sp
+The configuration parameters of a VA Pool are specified bye the `VAPool` struct.
 
 ```solidity
     struct VAPool {
@@ -38,18 +38,6 @@ The configuration parameters of a sp
         VAPoolState state;
     }
 ```
-
-### Vampire Attack Pool
-
-Configuration parameters:
- - Attacker protocol (address of bleeth.me router for the specific protocol).
- - Victim protocol (address of bleeth.me router for the specific protocol).
- - Reward token list (tokens given as reward).
- - Penalization coeficient.
- - Auction time.
- - Liquidity migration time.
- - Lock time.
- - Snapshot lookup time.
 
 ### Betting
 
