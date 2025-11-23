@@ -84,9 +84,14 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
 
     function finalizeBetting(uint256 vaPoolId) external payable {
         require(block.timestamp >= vaPools[vaPoolId].auctionEndTimestamp, "not finalized");
-        uint128 requestFee = entropy.getFeeV2();
-        if (msg.value < requestFee) revert("not enough fees");
-        randomnessMapping[entropy.requestV2{ value: requestFee }()] = vaPoolId;
+        if(vaPools[vaPoolId].invalidatableBetters.length != 0){
+            uint128 requestFee = entropy.getFeeV2();
+            if (msg.value < requestFee) revert("not enough fees");
+            randomnessMapping[entropy.requestV2{ value: requestFee }()] = vaPoolId;
+        } else {
+            vaPools[vaPoolId].state = VAPoolState.MIGRATION;
+        }
+        
     }
 
     function entropyCallback(
@@ -97,7 +102,12 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
         uint256 vaPoolId = randomnessMapping[sequenceNumber];
 
         uint256 finalAuctionEndTimestamp = vaPools[vaPoolId].auctionEndTimestamp - (uint256(randomNumber) % INVALIDATION_WINDOW);
-        // Logic to get the auction winner implemented here
+        Bet memory winnerBet;
+        for(uint256 i = vaPools[vaPoolId].invalidatableBetters.length; i >= 0; i--){
+            if(vaPools[vaPoolId].invalidatableBetters[i].timestamp < finalAuctionEndTimestamp){
+                winnerBet = vaPools[vaPoolId].invalidatableBetters[i];
+            }
+        }
 
         vaPools[vaPoolId].state = VAPoolState.MIGRATION;
     }
