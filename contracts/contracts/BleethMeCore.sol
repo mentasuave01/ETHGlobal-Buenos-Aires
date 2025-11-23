@@ -89,6 +89,8 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
             if (msg.value < requestFee) revert("not enough fees");
             randomnessMapping[entropy.requestV2{ value: requestFee }()] = vaPoolId;
         } else {
+            Bet memory winnerBet;   // todo: determine winnerBet
+            _processWinningSide(vaPoolId, winnerBet);
             vaPools[vaPoolId].state = VAPoolState.MIGRATION;
         }
         
@@ -106,9 +108,10 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
         for(uint256 i = vaPools[vaPoolId].invalidatableBetters.length; i >= 0; i--){
             if(vaPools[vaPoolId].invalidatableBetters[i].timestamp < finalAuctionEndTimestamp){
                 winnerBet = vaPools[vaPoolId].invalidatableBetters[i];
+                break;
             }
         }
-
+        _processWinningSide(vaPoolId, winnerBet);
         vaPools[vaPoolId].state = VAPoolState.MIGRATION;
     }
 
@@ -157,6 +160,10 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
         token.transferFrom(msg.sender, address(this), amount);
 
         emit BetPlaced(bytes32(vaPoolId), msg.sender);
+    }
+
+    function _processWinningSide(uint256 vaPoolId, Bet memory winningBet) internal {
+
     }
 
 }
