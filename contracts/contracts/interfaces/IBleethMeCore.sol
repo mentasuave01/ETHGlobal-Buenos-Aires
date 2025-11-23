@@ -1,17 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
 
-import { IBleethMeCore } from "./IBleethMeCore.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IBaseAdapter} from "./IBaseAdapter.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IBleethMeCore {
-    
     enum VAPoolState {
         UNINITIALIZED,
         BETTING,
         MIGRATION,
         LOCKING,
-        WITHDRAWAL 
+        WITHDRAWAL
     }
 
     enum BetSide {
@@ -19,24 +18,33 @@ interface IBleethMeCore {
         AGAINST
     }
 
+    struct Bet {
+        BetSide side;
+        IERC20 token;
+        uint256 amount;
+    }
+
+    event VAPoolCreated(bytes32 indexed poolId, address indexed attacker, address indexed victim);
+    event BetPlaced(bytes32 indexed poolId, address indexed user);
+
+    error InsufficientBetAmount();
+    error BettingPeriodClosed();
+
     function createVaPool(
-        IBleethMeCore attacker,
-        IBleethMeCore victim,
+        IBaseAdapter attacker,
+        IBaseAdapter victim,
         IERC20[] calldata rewardTokens,
         uint256 penalizationCoefficient,
         uint256 auctionDuration,
         uint256 liquidityMigrationDelay,
         uint256 lockDuration,
-        uint256 snapshotLookupTime
+        uint256 snapshotLookupTime,
+        Bet memory initialBet
     ) external returns (bytes32 poolId);
-    
-    function placeBet(
-        bytes32 poolId,
-        BetSide side,
-        IERC20 token,
-        uint256 amount
-    ) external;
 
+    function placeBet(uint256 vaPoolId, Bet memory bet) external;
+    
+    function getBet(uint256 vaPoolId, address better) external view returns (Bet memory);
 
     // TODO Enumerated mapping
 

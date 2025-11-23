@@ -65,3 +65,10 @@ Singleton contract that handles the VA Pools and the betting and rewards distrib
 ### bleeth.me Adapters
 
 Adapters with protocols, held the locked liquidity and allows the users to manage the liquidity.
+
+
+## Project commands
+
+### Run tests
+
+`pnpm hardhat test contracts/tests/BleethMeCore.t.sol`
