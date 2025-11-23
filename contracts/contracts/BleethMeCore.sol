@@ -67,6 +67,9 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
         IERC20 initialBetToken,
         uint256 initialBetAmount
     ) external returns (bytes32 poolId) {
+        // Checks
+        require(penalizationCoefficient <= PENALIZATION_BPS, "Invalid penalization");
+
         // Initialize vaPool
         vaPools[++vaPoolCount].attacker = attacker;
         vaPools[vaPoolCount].victim = victim;
@@ -113,8 +116,8 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
             if (msg.value < requestFee) revert("not enough fees");
             randomnessMapping[entropy.requestV2{value: requestFee}()] = vaPoolId;
         } else {
-            uint256 rewards = _computeRewards(vaPoolId);
-            _processWinningSide(vaPoolId, rewards);
+            (uint256 rewards, BetSide winnerSide) = _computeRewards(vaPoolId);
+            _processWinningSide(vaPoolId, rewards, winnerSide);
             vaPools[vaPoolId].state = VAPoolState.MIGRATION;
         }
     }
@@ -136,8 +139,8 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
             }
         }
         // TODO
-        uint256 rewards = _computeRewards(vaPoolId);
-        _processWinningSide(vaPoolId, rewards);
+        (uint256 rewards, BetSide winnerSide) = _computeRewards(vaPoolId);
+        _processWinningSide(vaPoolId, rewards, winnerSide);
         vaPools[vaPoolId].state = VAPoolState.MIGRATION;
     }
 
@@ -148,6 +151,10 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
         whitelistedRewardTokens.set(address(token), priceFeedId);
 
         emit RewardTokenWhitelisted(address(token), priceFeedId);
+    }
+
+    function updatePositionMerkleRoot(uint256 vaPoolId, bytes32 root) external onlyOwner {
+        vaStreams[vaPoolId].balancesMerkleRoot = root;
     }
 
     function finalizeBettingPeriod(uint256 vaPoolId) external onlyOwner {
@@ -198,25 +205,52 @@ contract BleethMeCore is IBleethMeCore, IEntropyConsumer, Ownable {
         emit BetPlaced(bytes32(vaPoolId), msg.sender);
     }
 
-    function _processWinningSide(uint256 vaPoolId, uint256 rewards) internal {
-        // TODO
+    function _processWinningSide(uint256 vaPoolId, uint256 rewards, BetSide winnerSide) internal {
+        if(winnerSide == BetSide.FOR){
+            vaStreams[vaPoolId].liquidityOrigin = vaPools[vaPoolId].victim;
+            vaStreams[vaPoolId].liquidityDestination = vaPools[vaPoolId].attacker;
+        } else {
+            vaStreams[vaPoolId].liquidityOrigin = vaPools[vaPoolId].attacker;
+            vaStreams[vaPoolId].liquidityDestination = vaPools[vaPoolId].victim;            
+        }
+        vaStreams[vaPoolId].totalRewards = rewards;
     }
 
-    function _computeRewards(uint256 vaPoolId) internal view returns (uint256) {
+    function _computeRewards(uint256 vaPoolId) internal view returns (uint256, BetSide winnerSide) {
         address[] memory rewardTokens = getWhitelistedRewardTokens();
         
-        uint256 totalValueFor = 0;
-        uint256 totalValueAgainst = 0;
+        uint256 totalValueFor;
+        uint256 totalValueAgainst;
 
         uint256 length = rewardTokens.length;
         for (uint256 i = 0; i < length; i++) {
             if (vaPools[vaPoolId].rewardTokens[IERC20(rewardTokens[i])]) {
                 bytes32 priceFeedId = whitelistedRewardTokens.get(rewardTokens[i]); 
                 PythStructs.Price memory price = pyth.getPriceNoOlderThan(priceFeedId, MAX_PRICE_AGE);
+                uint256 assetPrice = getPythPrice1e18(price.price, price.expo);
 
+                totalValueFor += assetPrice * vaPools[vaPoolId].totalBetFor[IERC20(rewardTokens[i])];
+                totalValueAgainst += assetPrice * vaPools[vaPoolId].totalBetAgainst[IERC20(rewardTokens[i])];
             }
+        }
+
+        if(totalValueFor > totalValueAgainst){
+            return (totalValueFor + totalValueAgainst * vaPools[vaPoolId].penalizationCoefficient / PENALIZATION_BPS, BetSide.FOR);
+        } else {
+            return (totalValueAgainst + totalValueFor * vaPools[vaPoolId].penalizationCoefficient / PENALIZATION_BPS, BetSide.AGAINST);
         }
 
         // TODO
     }
+
+    function getPythPrice1e18(int64 price, int32 expo) public pure returns (uint256) {
+        if (expo < -18) {
+            uint256 divisor = 10 ** uint32(uint32(-18 - expo));
+            return uint256(int256(price)) / divisor;
+        } else {
+            uint256 multiplier = 10 ** uint32(uint32(18 + expo));
+            return uint256(int256(price)) * multiplier;
+        }
+    }
+
 }
